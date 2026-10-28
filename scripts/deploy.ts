@@ -1,5 +1,6 @@
-import hardhat from "hardhat";
-const { ethers } = hardhat as any;
+import { network } from "hardhat";
+
+const { ethers } = await network.connect();
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -9,8 +10,11 @@ async function main() {
   const monthly = ethers.parseEther("0.01");
   const required = 1;
 
-  const Factory = await ethers.getContractFactory("LotteryPoolV1");
-  const pool = await Factory.deploy(members, monthly, required);
+  const pool = await ethers.deployContract("LotteryPoolV1", [
+    members,
+    monthly,
+    required,
+  ]);
   await pool.waitForDeployment();
 
   console.log("Deployed LotteryPoolV1 to:", await pool.getAddress());

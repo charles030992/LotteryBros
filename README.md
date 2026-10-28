@@ -1,85 +1,50 @@
-# LotteryBros - Lottery Pool (Multi-Sig) V1
+# LotteryBros — Pool de lotería multifirma
 
-Quick scaffold with a minimal multisig-style lottery pool contract for local testing with Hardhat + TypeScript.
+Estado: en progreso (V1, solo red local de Hardhat)
 
-How to run
+Contrato inteligente para que un grupo de amigos junte dinero cada mes y compre lotería **sin que nadie pueda mover fondos por su cuenta**: cada paso importante necesita la aprobación de otros miembros.
 
-1. Install dependencies:
+## Cómo funciona
 
-```
+1. **Contribuir** — cada miembro aporta la cuota mensual exacta (`contribute`).
+2. **Aprobar contribuciones** — otros miembros validan que la aportación es real (`approveContribution`). Nadie puede aprobar la suya. Con `requiredApprovals` aprobaciones, queda aprobada.
+3. **Proponer una compra** — solo un miembro con alguna contribución aprobada puede proponer comprar lotería (`purchaseLottery`). Proponer **no mueve dinero**.
+4. **Aprobar y ejecutar la compra** — otros miembros (no el comprador) aprueban (`approvePurchase`). Cuando hay `requiredApprovals` aprobaciones, cualquier miembro puede ejecutarla (`executePurchase`) y los fondos van al comprador, **una sola vez**.
+5. **Cambios de miembros** — añadir o quitar a alguien requiere una propuesta y la aprobación de la mayoría (mitad + 1) (`proposeAddMember`, `proposeRemoveMember`, `approveMemberProposal`).
+
+El contrato usa una guarda de reentrada (`nonReentrant`) en `purchaseLottery` y `executePurchase`.
+
+## Cómo probarlo
+
+Requisitos: Node.js 20+.
+
+```bash
 npm install
-```
-
-2. Compile and run tests:
-
-```
 npx hardhat compile
 npx hardhat test
 ```
 
-3. Deploy locally:
+Los tests (`test/LotteryPoolV1.test.ts`) cubren contribuciones, aprobaciones, el flujo de compra —incluido que **no se puede cobrar dos veces la misma compra**— y las propuestas de miembros por mayoría.
 
-```
-npx hardhat run scripts/deploy.ts --network localhost
-```
+Despliegue en la red local simulada:
 
-Notes
-- If you have trouble installing dependencies with npm (peer-deps), try `npm install --legacy-peer-deps`.
-- Keep project path without spaces to avoid potential ESM resolution issues on Windows.
-# Sample Hardhat 3 Beta Project (`mocha` and `ethers`)
-
-This project showcases a Hardhat 3 Beta project using `mocha` for tests and the `ethers` library for Ethereum interactions.
-
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
-
-## Project Overview
-
-This example project includes:
-
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using `mocha` and ethers.js
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
-
-## Usage
-
-### Running Tests
-
-To run all the tests in the project, execute the following command:
-
-```shell
-npx hardhat test
+```bash
+npx hardhat run scripts/deploy.ts
 ```
 
-You can also selectively run the Solidity or `mocha` tests:
+## Limitaciones conocidas
 
-```shell
-npx hardhat test solidity
-npx hardhat test mocha
-```
+- Solo se ha usado en la red local de Hardhat; no está desplegado en ninguna testnet.
+- No hay sorteo ni reparto de premios: el contrato gestiona la caja común y las compras, no el resultado.
+- Al quitar a un miembro se marca como no miembro, pero sigue en la lista interna `members`. Por eso la mayoría (mitad + 1) se calcula sobre todos los miembros que ha habido, no solo los actuales.
+- No ha sido auditado. No uses este contrato con dinero real.
 
-### Make a deployment to Sepolia
+## Notas
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+- Hardhat 3 (ESM + TypeScript). Si `npm install` da problemas de dependencias, prueba con `npm install --legacy-peer-deps`.
+- `contracts/Counter.sol`, `test/Counter.ts` y `ignition/modules/Counter.ts` son la plantilla inicial de Hardhat.
+- El detalle del arreglo de doble pago está en `CHANGES/github-pr.md`.
 
-To run the deployment to a local chain:
+## Licencia
 
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
-
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
-
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
-
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
-
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
-
-After setting the variable, you can run the deployment with the Sepolia network:
-
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+MIT — ver [LICENSE](./LICENSE).
